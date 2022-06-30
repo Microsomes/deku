@@ -73,7 +73,6 @@ let spam_transactions ~ticketer ~n () =
   let validator_uri = get_random_validator_uri () in
   let%await block_level = get_current_block_level () in
   let ticket = make_ticket ticketer in
-
   let transactions =
     List.init n (fun _ ->
         make_transaction ~block_level ~ticket ~sender:alice_wallet
