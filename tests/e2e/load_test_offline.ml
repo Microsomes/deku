@@ -149,19 +149,19 @@ TODO: Pass batch info as a parameter to load-test-transactions so we can run it 
 *)
 let load_test_transactions ticketer =
   let%await starting_block_level = get_current_block_level () in
-  let%await _ =
+  let transactions =
     List.init batch_count (fun _ ->
-        spam_transactions ~ticketer ~n:batch_size ())
-    |> List.hd in
+        spam_transactions ~ticketer ~n:batch_size ()) in
   let%await block_level = get_current_block_level () in
   let transaction =
     let ticket = make_ticket ticketer in
     make_transaction ~block_level ~ticket ~sender:alice_wallet
       ~recipient:bob_wallet ~amount:1 in
-  let%await _ =
+  let final_transaction =
     Network.request_user_operations_gossip
       { user_operations = [transaction] }
       (get_random_validator_uri ()) in
+  let%await _ = Lwt.all (final_transaction :: transactions) in
   let transaction_hash =
     (fun op -> op.Protocol.Operation.Core_user.hash) transaction in
   let%await final_block_level =
