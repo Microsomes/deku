@@ -1,7 +1,6 @@
 open Crypto
 open Node
 open Helpers
-open Cmdliner
 
 open (
   struct
@@ -67,34 +66,3 @@ let make_transaction ~block_level ~ticket ~sender ~recipient ~amount =
     ~data:
       (Core_deku.User_operation.make ~source:sender.key_hash
          (Transaction { destination = recipient.key_hash; amount; ticket }))
-
-module Test_kind = struct
-  (* TODO: this is a lot of boiler plate :( PPX to help with this? *)
-  type t =
-    | Saturate
-    | Maximal_blocks
-
-  let all_options = ["saturate"; "maximal-blocks"]
-
-  let of_string = function
-    | "saturate" -> Ok Saturate
-    | "maximal-blocks" -> Ok Maximal_blocks
-    | s -> Error (Format.sprintf "Unable to parse test kind \"%s\"" s)
-
-  let to_string = function
-    | Saturate -> "saturate"
-    | Maximal_blocks -> "maximal-blocks"
-
-  let test_kind_conv =
-    let parser x = of_string x |> Result.map_error (fun e -> `Msg e) in
-    let printer ppf test_kind = Format.fprintf ppf "%s" (to_string test_kind) in
-    let open Arg in
-    conv (parser, printer)
-
-  let arg_info =
-    let docv = "test_kind" in
-    let doc =
-      "The type of test to perform. Options: " ^ String.concat " | " all_options
-    in
-    Arg.info [] ~doc ~docv
-end

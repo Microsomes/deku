@@ -44,5 +44,5 @@
  (public_name deku-load-test-offline)
  (modules load_test_offline)
  (preprocess
-  (pps ppx_deriving.show ppx_deriving_yojson ppx_let_binding))
+  (pps ppx_deriving.show  ppx_deriving_yojson ppx_let_binding))
  (libraries cmdliner load_test_helpers))
