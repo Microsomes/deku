@@ -437,6 +437,11 @@ test_wasm_full() {
   asserter_balance "$DATA_DIRECTORY/0" $DEKU_ADDRESS "Pair \"$DUMMY_TICKET\" 0x" 
 }
 
+load_test_tps () {
+  DUMMY_TICKET_ADDRESS="$(tezos-client --endpoint $RPC_NODE show known contract dummy_ticket | grep KT1 | tr -d '\r')"
+  deku-load-test-tps "$DUMMY_TICKET_ADDRESS"
+}
+
 help() {
   # FIXME: fix these docs
   echo "$0 automates deployment of a Tezos testnet node and setup of a Deku cluster."
@@ -507,6 +512,9 @@ check-liveness)
   CONSENSUS_ADDRESS="$(tezos-client --endpoint $RPC_NODE show known contract consensus | grep KT1 | tr -d '\r')"
   echo "$CONSENSUS_ADDRESS" > /tmp/hello
   check-liveness "$RPC_NODE" "$CONSENSUS_ADDRESS"
+  ;;
+load-test-tps)
+  load_test_tps
   ;;
 *)
   help
