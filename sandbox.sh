@@ -437,9 +437,22 @@ test_wasm_full() {
   asserter_balance "$DATA_DIRECTORY/0" $DEKU_ADDRESS "Pair \"$DUMMY_TICKET\" 0x" 
 }
 
+# =======================
+# A hard-coded Deku wallet to use in development
+
+deposit_ticket_load_test() {
+  CONSENSUS_ADDRESS="$(tezos-client --endpoint $RPC_NODE show known contract consensus | grep KT1 | tr -d '\r')"
+  tezos-client --endpoint $RPC_NODE transfer 0 from $ticket_wallet to dummy_ticket \
+  --entrypoint mint_to_deku --arg "Pair (Pair \"$CONSENSUS_ADDRESS\" \"$DEKU_ADDRESS\") (Pair 100_000 0x)" \
+  --burn-cap 2
+}
+
 load_test_tps () {
-  DUMMY_TICKET_ADDRESS="$(tezos-client --endpoint $RPC_NODE show known contract dummy_ticket | grep KT1 | tr -d '\r')"
-  deku-load-test-tps "$DUMMY_TICKET_ADDRESS"
+  # Deposit 10_000 tickets
+  deposit_ticket_load_test | grep tezos-client | tr -d '\r'
+
+  DUMMY_TICKET=$(tezos-client show known contract dummy_ticket | tr -d '\t\n\r')
+  deku-load-test-tps "$DUMMY_TICKET"
 }
 
 help() {
