@@ -66,12 +66,11 @@ let make_transaction ~block_level ~ticket ~sender ~recipient ~amount =
         (Core_deku.User_operation.make ~source:sender.key_hash
            (Transaction {destination= recipient.key_hash; amount; ticket}) )
   in
-  let amount2 =
+  let () =
     match transaction.data.initial_operation with
     | Core_deku.User_operation.Transaction t ->
-        t.amount
+        assert (t.amount = amount)
     | _ ->
         failwith "Not a transaction\n"
   in
-  assert (amount2 = amount) ;
   transaction
