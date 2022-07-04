@@ -319,6 +319,7 @@ start_tezos_node() {
   tezos-client --endpoint $RPC_NODE config update
   tezos-client --endpoint $RPC_NODE import secret key myWallet "unencrypted:$SECRET_KEY" --force
 }
+
 deploy_dummy_ticket() {
   contract=$(ligo compile contract ./dummy_ticket.mligo)
   tezos-client --endpoint $RPC_NODE originate contract "dummy_ticket" \
@@ -328,8 +329,6 @@ deploy_dummy_ticket() {
     --burn-cap 2 \
     --force
 }
-
-
 
 # =======================
 # A hard-coded Deku wallet to use in development
@@ -393,6 +392,7 @@ test_wasm() {
   sleep 5
   asserter_contract "$DATA_DIRECTORY/0" "$CONTRACT_ADDRESS" "Pair \"$DUMMY_TICKET\" 0x" 100
 }
+
 test_wasm_full() {
   deposit_ticket | grep tezos-client | tr -d '\r'
   sleep 5
@@ -436,11 +436,12 @@ test_wasm_full() {
   sleep 5
   asserter_balance "$DATA_DIRECTORY/0" $DEKU_ADDRESS "Pair \"$DUMMY_TICKET\" 0x" 
 }
+
 help() {
   # FIXME: fix these docs
   echo "$0 automates deployment of a Tezos testnet node and setup of a Deku cluster."
   echo ""
-  echo "Usage: $0 setup|start|tear-down"
+  echo "Usage: $0 setup|start|tear-down|test-wasm|test-wasm-full|deploy-dummy-ticket|deposit-dummy-ticket|check-liveness"
   echo "Commands:"
   echo "setup"
   echo "  Does the following:"
