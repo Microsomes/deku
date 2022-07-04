@@ -6,25 +6,32 @@ open (
   struct
     include Server
   end :
-    sig end )
+    sig end)
 
-type wallet = {key_hash: Key_hash.t; secret: Secret.t}
+type wallet = {
+  key_hash : Key_hash.t;
+  secret : Secret.t;
+}
 
 (* The wallets are hard-coded to make it easier to deposit the initial ticket
    and to enable expect tests on the output in the future. *)
 let alice_wallet =
-  { key_hash=
-      Key_hash.of_string "tz1RPNjHPWuM8ryS5LDttkHdM321t85dSqaf" |> Option.get
-  ; secret=
+  {
+    key_hash =
+      Key_hash.of_string "tz1RPNjHPWuM8ryS5LDttkHdM321t85dSqaf" |> Option.get;
+    secret =
       Secret.of_string "edsk36FhrZwFVKpkdmouNmcwkAJ9XgSnE5TFHA7MqnmZ93iczDhQLK"
-      |> Option.get }
+      |> Option.get;
+  }
 
 let bob_wallet =
-  { key_hash=
-      Key_hash.of_string "tz1h1oFuYsCorjxekQ59bUe1uDGhuYvEx9ob" |> Option.get
-  ; secret=
+  {
+    key_hash =
+      Key_hash.of_string "tz1h1oFuYsCorjxekQ59bUe1uDGhuYvEx9ob" |> Option.get;
+    secret =
       Secret.of_string "edsk326F1xfCvHFw1LWhgtrwcm6DnFoHCmjjWX4vcWsJCbqmujJQVs"
-      |> Option.get }
+      |> Option.get;
+  }
 
 (* Hard-coded for now. TODO: get these dynamically, see
    https://github.com/marigold-dev/deku/pull/450 *)
@@ -35,8 +42,7 @@ let random_int v = v |> Int32.of_int |> Random.int32 |> Int32.to_int
 
 let get_random_validator_uri () =
   let validator =
-    List.nth validators_uris (random_int (List.length validators_uris))
-  in
+    List.nth validators_uris (random_int (List.length validators_uris)) in
   validator |> Uri.of_string
 
 let get_current_block_level () =
@@ -51,10 +57,9 @@ let make_ticket ticketer =
   let open Tezos in
   let ticketer =
     let contract = Tezos.Contract_hash.of_string ticketer |> Option.get in
-    Tezos.Address.Originated {contract; entrypoint= None}
-  in
+    Tezos.Address.Originated { contract; entrypoint = None } in
   let open Ticket_id in
-  Core_deku.Ticket_id.of_tezos {ticketer; data= Bytes.empty} |> Result.get_ok
+  Core_deku.Ticket_id.of_tezos { ticketer; data = Bytes.empty } |> Result.get_ok
 
 let make_transaction ~block_level ~ticket ~sender ~recipient ~amount =
   let amount = Core_deku.Amount.of_int amount in
@@ -64,13 +69,10 @@ let make_transaction ~block_level ~ticket ~sender ~recipient ~amount =
       ~block_height:block_level
       ~data:
         (Core_deku.User_operation.make ~source:sender.key_hash
-           (Transaction {destination= recipient.key_hash; amount; ticket}) )
+           (Transaction { destination = recipient.key_hash; amount; ticket }))
   in
   let () =
     match transaction.data.initial_operation with
-    | Core_deku.User_operation.Transaction t ->
-        assert (t.amount = amount)
-    | _ ->
-        failwith "Not a transaction\n"
-  in
+    | Core_deku.User_operation.Transaction t -> assert (t.amount = amount)
+    | _ -> failwith "Not a transaction\n" in
   transaction
