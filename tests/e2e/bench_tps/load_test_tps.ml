@@ -17,7 +17,7 @@ let spam_transactions ~ticketer ~n () =
       validator_uri in
   Lwt.return transactions
 
-let rec spam ~ticketer =
+let spam ~ticketer =
   let n = 100 in
   let rounds = 2 in
   let%await _ =
@@ -25,8 +25,7 @@ let rec spam ~ticketer =
     @@ List.init rounds (fun _ ->
            let%await _ = spam_transactions ~ticketer ~n () in
            await ()) in
-  let%await () = Lwt_unix.sleep 1.0 in
-  spam ~ticketer
+  Lwt.return ()
 
 let load_test_transactions ticketer =
   let%await starting_block_level = get_current_block_level () in

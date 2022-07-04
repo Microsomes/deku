@@ -450,7 +450,7 @@ deposit_ticket_load_test() {
 load_test_tps () {
   deploy_dummy_ticket
   sleep 10
-  # Deposit 10_000 tickets
+  # Deposit 100_000 tickets
   deposit_ticket_load_test | grep tezos-client | tr -d '\r'
   sleep 10
   DUMMY_TICKET=$(tezos-client show known contract dummy_ticket | tr -d '\t\n\r')
