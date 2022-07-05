@@ -124,3 +124,10 @@ let check_liveness rpc_address =
     process "check-liveness" [Uri.to_string rpc_address; consensus_address]
     |> run_res in
   Ok ()
+
+let tps_benchmark rpc_address =
+  let%ok dummy_ticket_address =
+    get_contract_address rpc_address "dummy_ticket" in
+  let dummy_ticket_address = Address.to_string dummy_ticket_address in
+  let%ok _result = process "tps-benchmark" [dummy_ticket_address] |> run_res in
+  Ok ()
