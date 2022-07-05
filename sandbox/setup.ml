@@ -128,7 +128,6 @@ let setup validators (rpc_address : Uri.t) tezos_secret data_folder =
   let%assert () =
     ("the tezos node is not bootstrapped", is_node_bootstrapped rpc_address)
   in
-  print_endline "foobar";
   let%ok _ = tezos_client_update_config rpc_address in
   let%ok _ =
     import_secret rpc_address "myWallet"
