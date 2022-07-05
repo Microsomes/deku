@@ -30,9 +30,13 @@ let spam ~ticketer ~n ~rounds =
   Lwt.return ()
 
 let load_test_transactions ticketer =
+  let rounds = 3 in
+  let n = 5000 in
   let%await starting_block_level = get_current_block_level () in
   Format.printf "Starting block level: %Li\n%!" starting_block_level ;
-  spam ~ticketer ~n:5000 ~rounds:3
+  Format.printf "Number of rounds: %i\n%!" rounds ;
+  Format.printf "Number of transactions/round: %i\n%!" n ;
+  spam ~ticketer ~n ~rounds
 
 (*
 let params =
