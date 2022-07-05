@@ -102,33 +102,23 @@ let spam_transactions ~ticketer ~n () =
         make_transaction ~block_level ~ticket ~sender:alice_wallet
           ~recipient:bob_wallet ~amount:1 )
   in
-  Format.eprintf "packed: %d\n%!" n ;
-  let%await _ =
+  let final_transaction =
     Network.request_user_operations_gossip
       {user_operations= transactions}
       validator_uri
   in
-  let _ =
-    List.fold_left
-      (fun acc transaction ->
-        Format.eprintf "batch index, hash : %i %s\n%!" acc
-          (Crypto.BLAKE2B.to_string
-             transaction.Protocol.Operation.Core_user.hash ) ;
-        acc + 1 )
-      0 transactions
-  in
+  let%await _ = Lwt.all [final_transaction] in
   let transaction = transactions |> List.rev |> List.hd in
   Lwt.return transaction
 
 let rec spam ~ticketer rounds_left ((batch_size, batch_count) as info) =
-  Format.eprintf "spam \n" ;
   let%await transaction =
     List.init batch_count (fun _ ->
         let transaction = spam_transactions ~ticketer ~n:batch_size () in
         transaction )
     |> List.rev |> List.hd
   in
-  if rounds_left = 1 then await transaction.Protocol.Operation.Core_user.hash
+  if rounds_left <= 1 then await transaction.Protocol.Operation.Core_user.hash
   else spam ~ticketer (rounds_left - 1) info
 
 let process_transactions timestamps_and_blocks =
@@ -169,8 +159,6 @@ let load_test_transactions ticketer =
   let%await starting_block_level = get_current_block_level () in
   Format.eprintf "Starting block level: %Li\n%!" starting_block_level ;
   let%await operation_hash = spam ~ticketer rounds (batch_size, batch_count) in
-  Format.eprintf "Operation_hash: %s\n"
-    (Crypto.BLAKE2B.to_string operation_hash) ;
   let%await final_block_level =
     get_last_block_height operation_hash starting_block_level
   in
@@ -184,14 +172,8 @@ let load_test_transactions ticketer =
   let%await timestamps_and_blocks =
     List.init (tps_period + 1) (fun i ->
         let block_index_of_spamming = i + starting_point in
-        let _ =
-          Format.eprintf "i:%i - block index of spamming: %i \n%!" i
-            block_index_of_spamming
-        in
         block_index_of_spamming )
-    |> Lwt_list.map_s (fun level ->
-           Format.eprintf "level response: %i\n%!" level ;
-           get_block_response_by_level level )
+    |> Lwt_list.map_s (fun level -> get_block_response_by_level level)
   in
   let tps = Int.of_float @@ process_transactions timestamps_and_blocks in
   Format.eprintf "TPS: %i\n%!" tps ;
