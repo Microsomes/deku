@@ -467,6 +467,17 @@ load_test_tps_offline () {
   deku-load-test-tps-offline "$DUMMY_TICKET"
 }
 
+network_msg () {
+  deploy_dummy_ticket
+  sleep 10
+  # Deposit 100_000 tickets
+  deposit_ticket_load_test | grep tezos-client | tr -d '\r'
+  sleep 10
+
+  DUMMY_TICKET="$(tezos-client show known contract dummy_ticket | grep KT1 | tr -d '\r')"
+  deku-network-msg "$DUMMY_TICKET"
+}
+
 help() {
   # FIXME: fix these docs
   echo "$0 automates deployment of a Tezos testnet node and setup of a Deku cluster."
@@ -543,6 +554,9 @@ load-test-tps)
   ;;
 load-test-tps-offline)
   load_test_tps_offline
+  ;;
+network-msg)
+  network_msg
   ;;
 *)
   help
