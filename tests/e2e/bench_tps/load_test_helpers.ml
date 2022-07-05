@@ -76,3 +76,41 @@ let make_transaction ~block_level ~ticket ~sender ~recipient ~amount =
     | Core_deku.User_operation.Transaction t -> assert (t.amount = amount)
     | _ -> failwith "Not a transaction\n" in
   transaction
+
+let get_block_response_by_level level =
+  let validator_uri = get_random_validator_uri () in
+  let%await response =
+    Network.request_block_by_level { level = Int64.of_int level } validator_uri
+  in
+  let%await _ =
+    match response with
+    | Some _ -> await ()
+    | None ->
+      failwith
+        (Printf.sprintf "get_block_response_by_level failed with level %d%!"
+           level) in
+  await (Option.get response)
+
+let rec get_last_block_height hash previous_level =
+  let open Network in
+  let uri = get_random_validator_uri () in
+  let%await reply, new_level =
+    request_block_by_user_operation_included
+      { operation_hash = hash; previous_level }
+      uri in
+  match reply with
+  | Some block_height -> await block_height
+  | None ->
+    let rec wait_until_good () =
+      (* [delay]: This parameter controls how often we query Deku to see if
+          the final transaction has been included in applied blocks.
+          This number is high to prevent DDosing the nodes.
+      *)
+      let delay = 10 in
+      Unix.sleep delay;
+      let%await current_level = get_current_block_level () in
+      if await current_level = await new_level then
+        wait_until_good ()
+      else
+        get_last_block_height hash new_level in
+    wait_until_good ()

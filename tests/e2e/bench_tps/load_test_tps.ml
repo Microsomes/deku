@@ -21,8 +21,6 @@ let spam_transactions ~ticketer ~n () =
   Lwt.return transactions
 
 let spam ~ticketer ~n ~rounds =
-  (*let n = 5000 in
-    let rounds = 8 in*)
   let%await _ =
     Lwt_list.iter_p Fun.id
     @@ List.init rounds (fun _ ->
@@ -54,6 +52,7 @@ let load_test_transactions ticketer =
     [ Lwt_unix.timeout 2.0
     ; spam ~ticketer ~n:5000 ~rounds:2
     ; spam ~ticketer ~n:5000 ~rounds:4 ]
+
 (*let sps = spams_params ~ticketer in
   Lwt_list.iter_s (fun s -> Lwt.pick [Lwt_unix.timeout 5.0; s]) sps*)
 

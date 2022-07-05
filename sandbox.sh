@@ -457,6 +457,16 @@ load_test_tps () {
   deku-load-test-tps "$DUMMY_TICKET"
 }
 
+load_test_tps_offline () {
+  deploy_dummy_ticket
+  sleep 10
+  # Deposit 100_000 tickets
+  deposit_ticket_load_test | grep tezos-client | tr -d '\r'
+  sleep 10
+  DUMMY_TICKET=$(tezos-client show known contract dummy_ticket | tr -d '\t\n\r')
+  deku-load-test-tps-offline "$DUMMY_TICKET"
+}
+
 help() {
   # FIXME: fix these docs
   echo "$0 automates deployment of a Tezos testnet node and setup of a Deku cluster."
@@ -530,6 +540,9 @@ check-liveness)
   ;;
 load-test-tps)
   load_test_tps
+  ;;
+load-test-tps-offline)
+  load_test_tps_offline
   ;;
 *)
   help
