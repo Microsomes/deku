@@ -9,14 +9,12 @@ let spam_transactions ~ticketer ~n () =
   let transactions =
     List.init n (fun _ ->
         make_transaction ~block_level ~ticket ~sender:alice_wallet
-          ~recipient:bob_wallet ~amount:1 )
-  in
-  Format.eprintf "Total transactions: %d\n%!" (List.length transactions) ;
+          ~recipient:bob_wallet ~amount:1) in
+  Format.eprintf "Total transactions: %d\n%!" (List.length transactions);
   let%await _ =
     Network.request_user_operations_gossip
-      {user_operations= transactions}
-      validator_uri
-  in
+      { user_operations = transactions }
+      validator_uri in
   Lwt.return transactions
 
 let spam ~ticketer ~n ~rounds =
@@ -25,17 +23,16 @@ let spam ~ticketer ~n ~rounds =
     @@ List.init rounds (fun _ ->
            (*Format.eprintf "(n: %i - rounds: %i)\n%!" n rounds ;*)
            let%await _ = spam_transactions ~ticketer ~n () in
-           await () )
-  in
+           await ()) in
   Lwt.return ()
 
 let load_test_transactions ticketer =
   let rounds = 3 in
   let n = 5000 in
   let%await starting_block_level = get_current_block_level () in
-  Format.printf "Starting block level: %Li\n%!" starting_block_level ;
-  Format.printf "Number of rounds: %i\n%!" rounds ;
-  Format.printf "Number of transactions/round: %i\n%!" n ;
+  Format.printf "Starting block level: %Li\n%!" starting_block_level;
+  Format.printf "Number of rounds: %i\n%!" rounds;
+  Format.printf "Number of transactions/round: %i\n%!" n;
   spam ~ticketer ~n ~rounds
 
 (*
@@ -74,10 +71,8 @@ let args =
     let docv = "ticketer" in
     let doc =
       "Tezos address of the contract issuing the ticket (e.g. \
-       KT1Ec5eb7WZNuqWDUdcFM1c2XcmwjWsJrrxb)"
-    in
-    required & pos 0 (some string) None & info [] ~doc ~docv
-  in
+       KT1Ec5eb7WZNuqWDUdcFM1c2XcmwjWsJrrxb)" in
+    required & pos 0 (some string) None & info [] ~doc ~docv in
   let open Term in
   const load_test_transactions $ ticketer
 

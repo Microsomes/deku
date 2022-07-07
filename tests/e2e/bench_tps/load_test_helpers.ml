@@ -102,14 +102,11 @@ let rec get_last_block_height hash previous_level =
   | Some block_height -> await block_height
   | None ->
     let rec wait_until_good () =
-      (* [delay]: This parameter controls how often we query Deku to see if
-          the final transaction has been included in applied blocks.
-          This number is high to prevent DDosing the nodes.
-      *)
-      let delay = 10 in
-      Unix.sleep delay;
-      let%await current_level = get_current_block_level () in
-      if await current_level = await new_level then
+      (* This parameter controls how often we query Deku to see if the final
+         transaction has been included in applied blocks. This number is high to
+         prevent DDosing the nodes. *)
+      Unix.sleep 10;
+      if get_current_block_level () = await new_level then
         wait_until_good ()
       else
         get_last_block_height hash new_level in

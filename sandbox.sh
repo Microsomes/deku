@@ -468,6 +468,7 @@ load_test_tps_offline () {
   # Deposit 100_000 tickets
   deposit_ticket_load_test | grep tezos-client | tr -d '\r'
   sleep 10
+  
   DUMMY_TICKET=$(tezos-client show known contract dummy_ticket | tr -d '\t\n\r')
   deku-load-test-tps-offline "$DUMMY_TICKET"
 }

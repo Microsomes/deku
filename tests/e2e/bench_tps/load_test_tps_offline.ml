@@ -53,27 +53,6 @@ let spam_transactions ~ticketer ~n () =
   let transaction = transactions |> List.rev |> List.hd in
   Lwt.return transaction
 
-let rec get_last_block_height hash previous_level =
-  let open Network in
-  let uri = get_random_validator_uri () in
-  let%await reply, new_level =
-    request_block_by_user_operation_included
-      { operation_hash = hash; previous_level }
-      uri in
-  match reply with
-  | Some block_height -> await block_height
-  | None ->
-    let rec wait_until_good () =
-      (* This parameter controls how often we query Deku to see if the final
-         transaction has been included in applied blocks. This number is high to
-         prevent DDosing the nodes. *)
-      Unix.sleep 10;
-      if get_current_block_level () = await new_level then
-        wait_until_good ()
-      else
-        get_last_block_height hash new_level in
-    wait_until_good ()
-
 (* Spam transactions for m rounds, Get the final transaction hash Find the
    block_level the transaction is included at Get blocks & block time from start
    block to final block *)
@@ -118,20 +97,6 @@ let process_transactions timestamps_and_blocks =
   let tps = Float.of_int total_transactions /. time_elapsed in
   tps
 
-let get_block_response_by_level level =
-  let validator_uri = get_random_validator_uri () in
-  let%await response =
-    Network.request_block_by_level { level = Int64.of_int level } validator_uri
-  in
-  let%await _ =
-    match response with
-    | Some _ -> await ()
-    | None ->
-      failwith
-        (Printf.sprintf "get_block_response_by_level failed with level %d%!"
-           level) in
-  await (Option.get response)
-
 (* When - (rounds, batch_size, batch_count) = (1, 10_000, 5) we think the nodes
    get ddossed because they seem to fall out of sync and we get the error
    When we call handle_user_operation_was_included_in_block with a large number
@@ -150,9 +115,6 @@ let load_test_transactions ticketer =
   let tps_period =
     Int64.to_int (Int64.sub final_block_level starting_block_level) in
   let starting_point = Int64.to_int starting_block_level in
-  (* TODO: Make sure this is always greater than 0 *)
-  (* TODO: Make sure that this function never calls the same level twice *)
-  (* TODO: We should be able to turn this into a single list init*)
   let%await timestamps_and_blocks =
     List.init (tps_period + 1) (fun i -> i + starting_point)
     |> Lwt_list.map_s (fun level -> get_block_response_by_level level) in
