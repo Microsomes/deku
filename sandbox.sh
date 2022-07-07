@@ -45,6 +45,11 @@ tezos-client() {
 
 consensus_wallet="myWallet"
 
+check_balance() {
+  echo | tezos-client --endpoint $RPC_NODE get balance for $consensus_wallet
+} 
+
+
 # Used to interact with ticket contract to prevent clashes in tezos-client counter
 ticket_wallet="bob"
 
@@ -557,6 +562,9 @@ load-test-tps-offline)
   ;;
 network-msg)
   network_msg
+  ;;
+check-balance)
+  check_balance
   ;;
 *)
   help
