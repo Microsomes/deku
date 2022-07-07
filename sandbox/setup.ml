@@ -128,7 +128,6 @@ let setup validators (rpc_address : Uri.t) tezos_secret data_folder =
   let%assert () =
     ("the tezos node is not bootstrapped", is_node_bootstrapped rpc_address)
   in
-  print_endline "foobar";
   let%ok _ = tezos_client_update_config rpc_address in
   let%ok _ =
     import_secret rpc_address "myWallet"
@@ -142,6 +141,17 @@ let setup validators (rpc_address : Uri.t) tezos_secret data_folder =
            let data_folder = Format.sprintf "%s/%d" data_folder i in
            let%ok key, uri, address = setup_identity ~data_folder uri in
            Ok (i, key, uri, address)) in
+  let%ok balance =
+    tezos_client
+      [
+        "--endpoint";
+        Uri.to_string rpc_address;
+        "get";
+        "balance";
+        "for";
+        "myWallet";
+      ] in
+  Format.eprintf "balance for myWallet is: %s\n%!" balance;
 
   (* deploy smart contracts *)
   let consensus_storage = make_consensus_storage identities in
