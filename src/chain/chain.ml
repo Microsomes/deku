@@ -31,6 +31,16 @@ type action =
   | Chain_fragment of { fragment : fragment [@opaque] }
 [@@deriving show]
 
+let pp_action action =
+  match action with
+  | Chain_trigger_timeout -> Format.eprintf "Chain trigger timeout\n%!"
+  | Chain_broadcast _ -> Format.eprintf "Chain broadcast\n%!"
+  | Chain_save_block _ -> Format.printf "Chain save block\n%!"
+  | Chain_send_request _ -> Format.eprintf "Chain send request\n%!"
+  | Chain_send_response _ -> Format.eprintf "Chain send response\n%!"
+  | Chain_send_not_found _ -> Format.eprintf "Chain send not found\n%!"
+  | Chain_fragment _ -> Format.eprintf "Chain fragment\n%!"
+
 let make ~identity ~validators ~default_block_size ~vm_state =
   let gossip = Gossip.empty in
   let validators = Validators.of_key_hash_list validators in

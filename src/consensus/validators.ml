@@ -4,6 +4,7 @@ type validators = Key_hash.Set.t
 and t = validators [@@deriving yojson]
 
 let of_key_hash_list = Key_hash.Set.of_list
+let to_key_hash_list l = Key_hash.Set.to_seq l |> List.of_seq
 
 let cardinal validators =
   (* TODO: O(1) cardinality *)

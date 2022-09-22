@@ -1,3 +1,4 @@
+(*
 open Deku_crypto
 open Deku_concepts
 open Deku_protocol
@@ -77,3 +78,4 @@ val compute : fragment -> outcome
 
 (* TODO: remove this in the future *)
 val test : unit -> unit
+*)
