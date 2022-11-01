@@ -136,6 +136,10 @@ struct
       List.map2
         (fun key signatures -> check_sig key signatures)
         public_keys b58_to_signatures
+
+    let compare_signatures =
+      List.sort compare
+        (List.map (fun (signature, _) -> signature) (List.flatten signatures))
   end
 
   module Print_secret_key = struct
@@ -238,5 +242,10 @@ struct
           Format.printf "];\n%!")
         Sig.verified_after_conversion;
       Format.printf "]\n%!"
+
+    let print_compare_signatures () =
+      Format.printf "let compare_signatures = \n%!";
+      let out = List.map helper_print_signatures Sig.compare_signatures in
+      Format.printf "\"%s\"\n%!" (String.concat "" out)
   end
 end
