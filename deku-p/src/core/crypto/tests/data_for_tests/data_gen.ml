@@ -147,6 +147,7 @@ struct
         (List.flatten signatures)
 
     let zero = to_b58check zero
+    let size = Signature.size
   end
 
   module Print_secret_key = struct
@@ -259,5 +260,6 @@ struct
       Format.printf "let equality_signatures = %b\n%!" Sig.equality_signatures
 
     let print_zero () = Format.printf "let size = %s\n%!" Sig.zero
+    let print_size () = Format.printf "let size = %d\n%!" Sig.size
   end
 end
