@@ -70,7 +70,7 @@ let insert_message =
 
 let insert_block ~block ~timestamp pool =
   let (Block.Block { hash = block_hash; level; _ }) = block in
-  let block = Block.yojson_of_t block in
+  let block = Data_encoding.Json.construct Block.encoding block in
   Caqti_eio.Pool.use (insert_block ~block_hash ~level ~block ~timestamp) pool
 
 let insert_block_and_votes ~level ~network ~timestamp pool =

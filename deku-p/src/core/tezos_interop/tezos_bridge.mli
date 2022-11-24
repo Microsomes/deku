@@ -4,10 +4,8 @@ open Deku_tezos
 (* push *)
 module Listen_transaction : sig
   type transaction = { entrypoint : string; value : Michelson.t }
-  [@@deriving yojson]
 
   type t = { hash : string; transactions : transaction list }
-  [@@deriving yojson]
 end
 
 (* response *)
@@ -41,5 +39,5 @@ val spawn :
 val inject_transaction :
   bridge ->
   entrypoint:string ->
-  payload:Yojson.Safe.t ->
+  payload:Data_encoding.Json.t ->
   Inject_transaction.t option
