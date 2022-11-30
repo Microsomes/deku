@@ -110,9 +110,9 @@
                 ocaml = {
                   command = "${ocamlPackages.ocamlformat}/bin/ocamlformat";
                   options = ["-i"];
-                  # FIXME: how to include dune files in this? 
+                  # FIXME: how to include dune files in this?
                   # dune build @fmt --auto-promote does not comply with treefmt spec
-                  includes = ["*.ml" ".mli"]; 
+                  includes = ["*.ml" ".mli"];
                 };
               };
             };
