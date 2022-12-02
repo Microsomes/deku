@@ -131,6 +131,40 @@ let test_200k_block_load env () =
   let (Block_storage.Storage { worker; _ }) = block_storage in
   Parallel.Worker.teardown worker
 
+let test_200k_block_and_votes env () =
+  Eio.Switch.run @@ fun sw ->
+  let block_storage = make_block_storage env sw in
+  let (Block { hash; level; _ } as block) = block ~default_block_size:200_000 in
+  let vote = make_vote ~hash identity in
+  let votes = Verified_signature.Set.add vote Verified_signature.Set.empty in
+  let votes = Verified_signature.Set.elements votes in
+  let content = Deku_gossip.Message.Content.accepted ~block ~votes in
+  let (Deku_gossip.Message.Message { header = _; content = _; network }) =
+    Deku_gossip.Message.encode ~content
+  in
+  Block_storage.save_block_and_votes ~level ~network block_storage;
+
+  let retrieved_block_and_votes =
+    let default_return = (Genesis.block, []) in
+    match Block_storage.find_block_and_votes_by_level ~level block_storage with
+    | Some (Message.Network.Network_message { raw_header; raw_content }) -> (
+        let expected = Message.Header.decode ~raw_header in
+        let (Message.Message { content; _ }) =
+          Message.decode ~expected ~raw_content
+        in
+        match content with
+        | Content_accepted { block; votes } -> (block, votes)
+        | _ -> default_return)
+    | None -> default_return
+  in
+  Alcotest.(check' (pair block_testable (list vote_testable)))
+    ~msg:"retrieved empty block and one vote equal saved"
+    ~expected:(block, votes) ~actual:retrieved_block_and_votes;
+
+  (* TODO: Fail the switch and capture the exception instead *)
+  let (Block_storage.Storage { worker; _ }) = block_storage in
+  Parallel.Worker.teardown worker
+
 (* TODO: Add tests with only one env threaded through all tests *)
 let eio_test_case : (Eio.Stdenv.t -> unit -> unit) -> unit -> unit =
  fun f () -> Eio_main.run (fun env -> f env ())
@@ -147,6 +181,8 @@ let run () =
             (eio_test_case test_empty_block_and_votes);
           test_case "200k_block is returned" `Slow
             (eio_test_case test_200k_block_load);
+          test_case "200k_block_and_votes is returned" `Slow
+            (eio_test_case test_200k_block_and_votes);
         ] );
     ]
 
