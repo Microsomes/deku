@@ -3,6 +3,7 @@ open Deku_crypto
 open Deku_consensus
 open Deku_concepts
 open Deku_gossip
+open Deku_block_storage
 
 let block_testable = Alcotest.testable Block.pp Block.equal
 
@@ -35,19 +36,16 @@ let uri = Uri.of_string (Format.sprintf "sqlite3:/tmp/%s.db" file_hash)
 let make_block_storage env sw =
   let domains = Eio.Stdenv.domain_mgr env in
   let worker = Parallel.Worker.make ~domains ~sw in
-  let storage = Deku_block_storage.Block_storage.make ~worker ~uri in
+  let storage = Block_storage.make ~worker ~uri in
   storage
 
 let test_empty_block_load env () =
   Eio.Switch.run @@ fun sw ->
   let block_storage = make_block_storage env sw in
   let (Block { hash; level; _ } as block) = block ~default_block_size:0 in
-  Deku_block_storage.Block_storage.save_block ~block block_storage;
+  Block_storage.save_block ~block block_storage;
   let retrieved_block =
-    match
-      Deku_block_storage.Block_storage.find_block_by_hash ~block_hash:hash
-        block_storage
-    with
+    match Block_storage.find_block_by_hash ~block_hash:hash block_storage with
     | Some json -> Block.t_of_yojson json
     | None -> Genesis.block
   in
@@ -56,9 +54,7 @@ let test_empty_block_load env () =
     ~actual:retrieved_block;
 
   let retrieved_block =
-    match
-      Deku_block_storage.Block_storage.find_block_by_level ~level block_storage
-    with
+    match Block_storage.find_block_by_level ~level block_storage with
     | Some json -> Block.t_of_yojson json
     | None -> Genesis.block
   in
@@ -68,9 +64,7 @@ let test_empty_block_load env () =
     ~actual:retrieved_block;
 
   (* TODO: Fail the switch and capture the exception instead *)
-  let (Deku_block_storage.Block_storage.Storage { worker; _ }) =
-    block_storage
-  in
+  let (Block_storage.Storage { worker; _ }) = block_storage in
   Parallel.Worker.teardown worker
 
 let test_empty_block_and_votes env () =
@@ -84,15 +78,11 @@ let test_empty_block_and_votes env () =
   let (Deku_gossip.Message.Message { header = _; content = _; network }) =
     Deku_gossip.Message.encode ~content
   in
-  Deku_block_storage.Block_storage.save_block_and_votes ~level ~network
-    block_storage;
+  Block_storage.save_block_and_votes ~level ~network block_storage;
 
   let retrieved_block_and_votes =
     let default_return = (Genesis.block, []) in
-    match
-      Deku_block_storage.Block_storage.find_block_and_votes_by_level ~level
-        block_storage
-    with
+    match Block_storage.find_block_and_votes_by_level ~level block_storage with
     | Some (Message.Network.Network_message { raw_header; raw_content }) -> (
         let expected = Message.Header.decode ~raw_header in
         let (Message.Message { content; _ }) =
@@ -108,9 +98,7 @@ let test_empty_block_and_votes env () =
     ~expected:(block, votes) ~actual:retrieved_block_and_votes;
 
   (* TODO: Fail the switch and capture the exception instead *)
-  let (Deku_block_storage.Block_storage.Storage { worker; _ }) =
-    block_storage
-  in
+  let (Block_storage.Storage { worker; _ }) = block_storage in
   Parallel.Worker.teardown worker
 
 (* TODO: Add tests with only one env threaded through all tests *)
