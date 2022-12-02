@@ -21,6 +21,7 @@ let file_hash =
   let randn = Stdlib.Random.int 230 in
   Deku_crypto.BLAKE2b.hash (Int.to_string randn) |> BLAKE2b.to_hex
 
+(* TODO: change to an in-memory databse *)
 let uri = Uri.of_string (Format.sprintf "sqlite3:/tmp/%s.db" file_hash)
 
 let make_block_storage env sw =
@@ -32,7 +33,7 @@ let make_block_storage env sw =
 let test_empty_block_load env () =
   Eio.Switch.run @@ fun sw ->
   let block_storage = make_block_storage env sw in
-  let (Block { hash; _ } as block) = block ~default_block_size:0 in
+  let (Block { hash; level; _ } as block) = block ~default_block_size:0 in
   Deku_block_storage.Block_storage.save_block ~block block_storage;
   let retrieved_block =
     match
@@ -43,7 +44,19 @@ let test_empty_block_load env () =
     | None -> Genesis.block
   in
   Alcotest.(check' block_testable)
-    ~msg:"hash loaded block is not equal to saved block" ~expected:block
+    ~msg:"hash loaded block is equal to saved block" ~expected:block
+    ~actual:retrieved_block;
+
+  let retrieved_block =
+    match
+      Deku_block_storage.Block_storage.find_block_by_level ~level block_storage
+    with
+    | Some json -> Block.t_of_yojson json
+    | None -> Genesis.block
+  in
+
+  Alcotest.(check' block_testable)
+    ~msg:"level loaded block is equal to saved block" ~expected:block
     ~actual:retrieved_block;
 
   let (Deku_block_storage.Block_storage.Storage { worker; _ }) =
@@ -51,6 +64,7 @@ let test_empty_block_load env () =
   in
   Parallel.Worker.teardown worker
 
+(* TODO: Add tests with only one env threaded through all tests *)
 let eio_test_case : (Eio.Stdenv.t -> unit -> unit) -> unit -> unit =
  fun f () -> Eio_main.run (fun env -> f env ())
 
@@ -66,3 +80,8 @@ let run () =
     ]
 
 let () = run ()
+
+(* TODO: Tests
+   try all combinations of what's in the block_storage.mli. Use it with different block sizes, do it in parallel, try reading and writing at the same time, try reading a query that doesn't exist
+   try reading something right before you write it and vice versa,
+   try reading or writing two things at once *)
