@@ -103,6 +103,24 @@ let test_empty_block_and_votes env () =
   let (Block_storage.Storage { worker; _ }) = block_storage in
   Parallel.Worker.teardown worker
 
+let test_200k_block_load env () =
+  Eio.Switch.run @@ fun sw ->
+  let block_storage = make_block_storage env sw in
+  let (Block { hash; _ } as block) = block ~default_block_size:200_000 in
+  Block_storage.save_block ~block block_storage;
+  let retrieved_block =
+    match Block_storage.find_block_by_hash ~block_hash:hash block_storage with
+    | Some json -> Block.t_of_yojson json
+    | None -> Genesis.block
+  in
+  Alcotest.(check' block_testable)
+    ~msg:"hash loaded block is equal to saved block" ~expected:block
+    ~actual:retrieved_block;
+
+  (* TODO: Fail the switch and capture the exception instead *)
+  let (Block_storage.Storage { worker; _ }) = block_storage in
+  Parallel.Worker.teardown worker
+
 (* TODO: Add tests with only one env threaded through all tests *)
 let eio_test_case : (Eio.Stdenv.t -> unit -> unit) -> unit -> unit =
  fun f () -> Eio_main.run (fun env -> f env ())
@@ -117,6 +135,8 @@ let run () =
             (eio_test_case test_empty_block_load);
           test_case "empty block and one vote is returned" `Quick
             (eio_test_case test_empty_block_and_votes);
+          test_case "200k_block is returned" `Slow
+            (eio_test_case test_200k_block_load);
         ] );
     ]
 
