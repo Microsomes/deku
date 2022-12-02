@@ -28,9 +28,9 @@ let block ~default_block_size =
 
 (* NOTE: These tests generate new databases in /tmp/ for every test, for every run. *)
 let uri () =
-let file_hash =
-  let randn = Stdlib.Random.int 230 in
-  Deku_crypto.BLAKE2b.hash (Int.to_string randn) |> BLAKE2b.to_hex
+  let file_hash =
+    let randn = Stdlib.Random.int 230 in
+    Deku_crypto.BLAKE2b.hash (Int.to_string randn) |> BLAKE2b.to_hex
   in
   Uri.of_string (Format.sprintf "sqlite3:/tmp/%s.db" file_hash)
 
@@ -106,7 +106,7 @@ let test_empty_block_and_votes env () =
 let test_200k_block_load env () =
   Eio.Switch.run @@ fun sw ->
   let block_storage = make_block_storage env sw in
-  let (Block { hash; _ } as block) = block ~default_block_size:200_000 in
+  let (Block { hash; level; _ } as block) = block ~default_block_size:200_000 in
   Block_storage.save_block ~block block_storage;
   let retrieved_block =
     match Block_storage.find_block_by_hash ~block_hash:hash block_storage with
@@ -115,6 +115,16 @@ let test_200k_block_load env () =
   in
   Alcotest.(check' block_testable)
     ~msg:"hash loaded block is equal to saved block" ~expected:block
+    ~actual:retrieved_block;
+
+  let retrieved_block =
+    match Block_storage.find_block_by_level ~level block_storage with
+    | Some json -> Block.t_of_yojson json
+    | None -> Genesis.block
+  in
+
+  Alcotest.(check' block_testable)
+    ~msg:"level loaded block is equal to saved block" ~expected:block
     ~actual:retrieved_block;
 
   (* TODO: Fail the switch and capture the exception instead *)
