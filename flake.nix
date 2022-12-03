@@ -83,7 +83,7 @@
             tuna = self'.packages.tuna;
             deploy-rs = deploy-rs.packages.${system}.default;
           };
-          formatter = builtins.trace system treefmt.legacyPackages.${system}.withConfig {
+          formatter = treefmt.legacyPackages.${system}.withConfig {
             settings = with pkgs; {
               excludes = ["_build" "node_modules" "result" ".direnv"];
               formatter = {
@@ -108,9 +108,11 @@
                   ];
                 };
                 ocaml = {
-                  command = "ocamlformat";
+                  command = "${ocamlPackages.ocamlformat}/bin/ocamlformat";
                   options = ["-i"];
-                  includes = ["*.ml" ".mli"];
+                  # FIXME: how to include dune files in this? 
+                  # dune build @fmt --auto-promote does not comply with treefmt spec
+                  includes = ["*.ml" ".mli"]; 
                 };
               };
             };
